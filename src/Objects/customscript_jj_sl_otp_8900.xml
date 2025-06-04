@@ -1,0 +1,25 @@
+<suitelet scriptid="customscript_jj_sl_otp_8900">
+  <description></description>
+  <isinactive>F</isinactive>
+  <name>JJ SL Jira Task OTP-8900</name>
+  <notifyadmins>F</notifyadmins>
+  <notifyemails></notifyemails>
+  <notifyowner>T</notifyowner>
+  <notifyuser>F</notifyuser>
+  <scriptfile>[/SuiteScripts/JobinAndJismi/OTP-8900/jj_sl_jira_task_otp-8900.js]</scriptfile>
+  <scriptdeployments>
+    <scriptdeployment scriptid="customdeploy_jj_sl_otp_8900">
+      <allemployees>T</allemployees>
+      <allpartners>F</allpartners>
+      <allroles>T</allroles>
+      <audslctrole>CUSTOMER_CENTER|EMPLOYEE_CENTER|NETSUITE_SUPPORT_CENTER|NETSUITE_SUPPORT_CENTER__BASIC|ONLINE_FORM_USER|PARTNER_CENTER|SHOPPER|VENDOR_CENTER</audslctrole>
+      <eventtype></eventtype>
+      <isdeployed>T</isdeployed>
+      <isonline>T</isonline>
+      <loglevel>DEBUG</loglevel>
+      <runasrole></runasrole>
+      <status>RELEASED</status>
+      <title>JJ SL Jira Task OTP-8900</title>
+    </scriptdeployment>
+  </scriptdeployments>
+</suitelet>
