@@ -30,7 +30,7 @@
  *
  *************************************************************************************
  **********/
-define(["N/log", "N/record", "N/search", "N/ui/serverWidget", "N/url"], /**
+define(["N/email","N/log", "N/record", "N/search", "N/ui/serverWidget", "N/url"], /**
  * @param{email} email
  * @param{log} log
  * @param{record} record
@@ -48,7 +48,8 @@ define(["N/log", "N/record", "N/search", "N/ui/serverWidget", "N/url"], /**
   const onRequest = (scriptContext) => {
     try {
       if (scriptContext.request.method === "GET") {
-        formCreation();
+        
+        formCreation(scriptContext);
       }
       if (scriptContext.request.method === "POST") {
         var custName = scriptContext.request.parameters.custpage_cust_ref_name;
@@ -60,7 +61,7 @@ define(["N/log", "N/record", "N/search", "N/ui/serverWidget", "N/url"], /**
         var custMessage =
           scriptContext.request.parameters.custpage_cust_ref_message;
 
-        var customerSearch1 = emailSearch(custEmail);
+        var customerSearch1 = emailSearch(custEmail,scriptContext);
 
         var customerId;
 
@@ -74,7 +75,16 @@ define(["N/log", "N/record", "N/search", "N/ui/serverWidget", "N/url"], /**
           isEditMode: true,
         });
 
-        recordCreation();
+        var customerRecord = record.load({
+          type:record.Type.CUSTOMER,
+          id:customerId,
+          isDynamic:true,
+        });
+
+        var salesRep = customerRecord.getValue({fieldId:'salesrep'});
+        
+
+        recordCreation(custName,custEmail,refLink,custSubject,custMessage,salesRep);
       }
     } catch (e) {
       log.debug("Error caught", e.message);
@@ -82,11 +92,12 @@ define(["N/log", "N/record", "N/search", "N/ui/serverWidget", "N/url"], /**
   };
   /**
    * Function to create a form
-   * @param
+   * @param scriptContext
    * @returns {void}
    */
 
-  function formCreation() {
+  function formCreation(scriptContext) {
+    
     var form = serverWidget.createForm({
       title: "Customer Form",
     });
@@ -124,13 +135,14 @@ define(["N/log", "N/record", "N/search", "N/ui/serverWidget", "N/url"], /**
     });
   }
 
-  //Searching for existing customers with the entered email
+  
   /**
-   * Function to create a saved search
+   * Function to create a search
    * @param {string} email : the email which was entered in the form
+   * @param  scriptContext
    * @returns {search object}
    */
-  function emailSearch(email) {
+  function emailSearch(email,scriptContext) {
     var customerSearch = search.create({
       title: "Email Duplicate Search JJ",
       id: "customsearch_jj_email_duplicate",
@@ -147,42 +159,95 @@ define(["N/log", "N/record", "N/search", "N/ui/serverWidget", "N/url"], /**
 
   /**
    * Function to create a custom record
-   * @param {}
+   * @param {string} name - name of the customer
+   * @param {string} email - email address of the customer
+   * @param {url} link - link to the existing customer record
+   * @param {string} sub - subject of the message
+   * @param {string} msg - the message content
+   * @param {int} saleRep - internal id of the customer's sales rep
    * @returns {void}
    */
 
-  function recordCreation() {
+  function recordCreation(name,email,link,sub,msg,saleRep) {
+    
     //Record creation
     var customerRecord = record.create({
       type: "customrecord_jj_customer_reference",
       ignoreFieldChange: true,
       isDynamic: true,
     });
-
+    
     //Setting values
     customerRecord.setValue({
       fieldId: "custrecord_jj_cust_ref_name",
-      value: custName,
+      value: name,
     });
     customerRecord.setValue({
       fieldId: "custrecord_jj_cust_ref_email",
-      value: custEmail,
+      value: email,
     });
     customerRecord.setValue({
       fieldId: "custrecord_jj_cust_ref_subject",
-      value: custSubject,
+      value: sub,
     });
     customerRecord.setValue({
       fieldId: "custrecord_jj_cust_reference",
-      value: refLink,
+      value: link,
     });
 
     customerRecord.setValue({
       fieldId: "custrecord_jj_cust_ref_message",
-      value: custMessage,
+      value: msg,
     });
 
-    customerRecord.save();
+    var recId = customerRecord.save();
+
+    if(recId){
+      sendAdminEmail();
+    }
+
+    if(saleRep){
+      sendRepEmail(saleRep);
+    }
+  }
+  
+  /**
+   * Function to send email notification to the NetSuite admin
+   * @param {}
+   * @returns {void}
+   */
+  function sendAdminEmail(){
+
+    email.send({
+      author:-5,
+      recipients:['logan.whitaker@zentorque.com'],
+      subject:"Custom Record Creation",
+      body:"A custom customer record was created",
+    });
+
+  }
+
+  /**
+   * Function to send email notification to the customer's sales rep, if any
+   * @param {int} salesRepresentative - internal id of the sales rep
+   * @returns {void}
+   */
+  function sendRepEmail(salesRepresentative)
+  {
+    var salesRepRecord = record.load({
+      type:record.Type.EMPLOYEE,
+      id:salesRepresentative,
+      isDynamic:true,
+    });
+
+    var salesRepEmail = salesRepRecord.getValue({fieldId:'email'});
+
+    email.send({
+      author:-5,
+      recipients:[salesRepEmail],
+      subject:"Custom record creation",
+      body:"A custom customer record was created"
+    });
   }
 
   return { onRequest };
