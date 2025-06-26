@@ -21,29 +21,23 @@
  * matching customer,, with the same email address entered in the form.
  *
  *
+ *
  * REVISION HISTORY
  *
  * @version 1.0  :  02-June-2025: The initial build was created by JJ0401
  * @version 1.1  :  11-June-2025: Formatted the header section, set ignoreMandatoryField
  *                                to true, changed the log level from debug to error,added
  *                                try-catch error handling to all custom functions and the
- *                                code was optimized
- *
+ *                                code was optimized.
  *
  *************************************************************************************/
-define([
-  "N/email",
-  "N/log",
-  "N/record",
-  "N/search",
-  "N/ui/serverWidget"
-], /**
+define(["N/email", "N/log", "N/record", "N/search", "N/ui/serverWidget", ,], /**
  * @param{email} email
  * @param{log} log
  * @param{record} record
  * @param{search} search
  * @param{serverWidget} serverWidget
-*/ (email, log, record, search, serverWidget) => {
+ */ (email, log, record, search, serverWidget) => {
   /**
    * Defines the Suitelet script trigger point.
    * @param {Object} scriptContext
@@ -76,29 +70,29 @@ define([
         title: "Customer Form",
       });
 
-      var nameField = form.addField({
+      var nameField = (form.addField({
         id: "custpage_cust_ref_name",
         type: serverWidget.FieldType.TEXT,
         label: "Customer Name",
-      });
+      }).isMandatory = true);
 
-      var emailField = form.addField({
+      var emailField = (form.addField({
         id: "custpage_cust_ref_email",
         type: serverWidget.FieldType.EMAIL,
         label: "Customer Email",
-      });
+      }).isMandatory = true);
 
-      var subjectField = form.addField({
+      var subjectField = (form.addField({
         id: "custpage_cust_ref_subject",
         type: serverWidget.FieldType.TEXT,
         label: "Subject",
-      });
+      }).isMandatory = true);
 
-      var messageField = form.addField({
+      var messageField = (form.addField({
         id: "custpage_cust_ref_message",
         type: serverWidget.FieldType.TEXT,
         label: "Message",
-      });
+      }).isMandatory = true);
 
       form.addSubmitButton({
         label: "Submit",
@@ -155,63 +149,120 @@ define([
           customerId = result.getValue({ name: "internalId" });
         });
 
-        let saleRep = search.lookupFields({
-          type: search.Type.CUSTOMER,
-          id: customerId,
-          columns: ["salesrep"],
-        });
+        if (!customerId) {
+          let newCustomerRecord = record.create({
+            type: "customrecord_jj_customer_reference",
+            ignoreFieldChange: true,
+            isDynamic: true,
+          });
 
-        let salesRepId = saleRep.salesrep[0].value;
+          newCustomerRecord.setValue({
+            fieldId: "custrecord_jj_cust_ref_name",
+            value: custName,
+            ignoreFieldChange: true,
+          });
 
-        var customerRecord = record.create({
-          type: "customrecord_jj_customer_reference",
-          ignoreFieldChange: true,
-          isDynamic: true,
-        });
+          newCustomerRecord.setValue({
+            fieldId: "custrecord_jj_cust_ref_email",
+            value: custEmail,
+            ignoreFieldChange: true,
+          });
 
-        //Setting values
-        customerRecord.setValue({
-          fieldId: "custrecord_jj_cust_ref_name",
-          value: custName,
-          ignoreFieldChange: true,
-        });
-        customerRecord.setValue({
-          fieldId: "custrecord_jj_cust_ref_email",
-          value: custEmail,
-          ignoreFieldChange: true,
-        });
+          newCustomerRecord.setValue({
+            fieldId: "custrecord_jj_cust_ref_subject",
+            value: custSubject,
+            ignoreFieldChange: true,
+          });
 
-        customerRecord.setValue({
-          fieldId: "custrecord_jj_cust_reference",
-          value: customerId,
-          ignoreFieldChange: true,
-        });
+          newCustomerRecord.setValue({
+            fieldId: "custrecord_jj_cust_ref_message",
+            value: custMessage,
+            ignoreFieldChange: true,
+          });
 
-        customerRecord.setValue({
-          fieldId: "custrecord_jj_cust_ref_subject",
-          value: custSubject,
-          ignoreFieldChange: true,
-        });
+          let newRecId = newCustomerRecord.save({
+            ignoreMandatoryFields: true,
+          });
 
-        customerRecord.setValue({
-          fieldId: "custrecord_jj_cust_ref_message",
-          value: custMessage,
-          ignoreFieldChange: true,
-        });
 
-        var recId = customerRecord.save({
-          ignoreMandatoryFields: true,
-        });
+          let form = serverWidget.createForm({
+            title: "Custom Record Creation !",
+          });
 
-        let form = serverWidget.createForm({
-          title: "Custom Record Creation !",
-        });
+          let resultField = (form.addField({
+            id: "custpage_result",
+            type: serverWidget.FieldType.INLINEHTML,
+            label: "Text",
+          }).defaultValue = `
+            <h1> Custom Record Created </h1>
+            <p> Customer Name : ${custName} </p>
+            <p> Customer Email : ${custEmail} </p>
+            <p> Subject : ${custSubject} </p>
+            <p> Message : ${custMessage} </p>
+          `);
 
-        let resultField = (form.addField({
-          id: "custpage_result",
-          type: serverWidget.FieldType.INLINEHTML,
-          label: "Text",
-        }).defaultValue = `
+          scriptContext.response.writePage({
+            pageObject: form,
+          });
+        } else {
+          let saleRep = search.lookupFields({
+            type: search.Type.CUSTOMER,
+            id: customerId,
+            columns: ["salesrep"],
+          });
+
+          let salesRepId = saleRep.salesrep[0].value;
+          log.error(salesRepId);
+
+          let customerRecord = record.create({
+            type: "customrecord_jj_customer_reference",
+            ignoreFieldChange: true,
+            isDynamic: true,
+          });
+
+          //Setting values
+          customerRecord.setValue({
+            fieldId: "custrecord_jj_cust_ref_name",
+            value: custName,
+            ignoreFieldChange: true,
+          });
+          customerRecord.setValue({
+            fieldId: "custrecord_jj_cust_ref_email",
+            value: custEmail,
+            ignoreFieldChange: true,
+          });
+
+          customerRecord.setValue({
+            fieldId: "custrecord_jj_cust_reference",
+            value: customerId,
+            ignoreFieldChange: true,
+          });
+
+          customerRecord.setValue({
+            fieldId: "custrecord_jj_cust_ref_subject",
+            value: custSubject,
+            ignoreFieldChange: true,
+          });
+
+          customerRecord.setValue({
+            fieldId: "custrecord_jj_cust_ref_message",
+            value: custMessage,
+            ignoreFieldChange: true,
+          });
+
+          let recId = customerRecord.save({
+            ignoreMandatoryFields: true,
+          });
+
+          let form = serverWidget.createForm({
+            title: "Custom Record Creation !",
+          });
+
+          let resultField = (form.addField({
+            id: "custpage_result",
+            type: serverWidget.FieldType.INLINEHTML,
+            label: "Text",
+          }).defaultValue = `
             <h1> Custom Record Created </h1>
             <p> Customer Name : ${custName} </p>
             <p> Customer Email : ${custEmail} </p>
@@ -219,16 +270,17 @@ define([
             <p> Message : ${custMessage} </p>
     `);
 
-        scriptContext.response.writePage({
-          pageObject: form,
-        });
+          scriptContext.response.writePage({
+            pageObject: form,
+          });
 
-        if (recId) {
-          sendAdminEmail();
-        }
+          if (recId) {
+            sendAdminEmail();
+          }
 
-        if (saleRep) {
-          sendRepEmail(salesRepId);
+          if (saleRep) {
+            sendRepEmail(salesRepId);
+          }
         }
       }
     } catch (e) {
@@ -247,11 +299,7 @@ define([
     try {
       let searchForDuplicate = search.create({
         type: "customrecord_jj_customer_reference",
-        filters: [
-          ["custrecord_jj_cust_ref_name", "is", name],
-          "AND",
-          ["custrecord_jj_cust_ref_email", "is", email],
-        ],
+        filters: [["custrecord_jj_cust_ref_email", "is", email]],
         columns: [
           search.createColumn({
             name: "custrecord_jj_cust_ref_name",

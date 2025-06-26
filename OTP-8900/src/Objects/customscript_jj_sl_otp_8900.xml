@@ -12,12 +12,12 @@
       <allemployees>T</allemployees>
       <allpartners>F</allpartners>
       <allroles>T</allroles>
-      <audslctrole></audslctrole>
+      <audslctrole>CUSTOMER_CENTER|EMPLOYEE_CENTER|NETSUITE_SUPPORT_CENTER|NETSUITE_SUPPORT_CENTER__BASIC|ONLINE_FORM_USER|PARTNER_CENTER|SHOPPER|VENDOR_CENTER</audslctrole>
       <eventtype></eventtype>
       <isdeployed>T</isdeployed>
       <isonline>T</isonline>
       <loglevel>ERROR</loglevel>
-      <runasrole></runasrole>
+      <runasrole>ADMINISTRATOR</runasrole>
       <status>RELEASED</status>
       <title>JJ SL OTP-8900</title>
     </scriptdeployment>
